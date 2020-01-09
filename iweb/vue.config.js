@@ -38,20 +38,20 @@ module.exports = {
     open: false,
     proxy: {
       '/static': {
-        target: 'http://localhost:18100/static/',
+        target: 'http://localhost:18080/static/',
         changeOrigin: true,
         pathRewrite: {
           '^/static': ''
         }
       },
       '/api': {    // search为转发路径
-        target: 'http://localhost:18100/index.php/',  // 目标地址
+        target: 'http://localhost:18080/index.php/',  // 目标地址
         // ws: true, // 是否代理websockets
         changeOrigin: true,   // 设置同源  默认false，是否需要改变原始主机头为目标URL,
         pathRewrite: {  // 替换，通配/api的替换成/
           '^/api': ''
         }
       }
-    },
+    }
   }
 };
