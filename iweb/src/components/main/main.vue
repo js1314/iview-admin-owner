@@ -93,7 +93,7 @@
         return this.$store.state.app.tagRouter;
       },
       userAvatar() {
-        return this.$store.state.user.avatarImgPath;
+        return this.$store.state.user.avatar;
       },
       cacheList() {
         const list = ['ParentView', ...this.tagNavList.length ? this.tagNavList.filter(item => !(item.meta && item.meta.notCache)).map(item => item.name) : []];
@@ -126,7 +126,6 @@
       ]),
       ...mapActions([
         'handleLogin',
-        'getUnreadMessageCount'
       ]),
       turnToPage(route) {
         let {name, params, query} = {};
@@ -144,6 +143,8 @@
           name,
           params,
           query
+        }).catch(e => {
+
         });
       },
       handleCollapsedChange(state) {
@@ -200,8 +201,6 @@
           name: this.$config.homeName
         });
       }
-      // 获取未读消息条数
-      // this.getUnreadMessageCount();
     }
   };
 </script>

@@ -55,12 +55,12 @@ const dynamicRouters = [
       {
         path: '/home',
         name: 'home',
+        component: Component.lazyView('home/home.vue'),
         meta: {
           title: '首页',
-          notCache: true,
-          icon: 'md-home'
-        },
-        component: Component.lazyView('home/home.vue')
+          icon: 'md-home',
+          notCache: true
+        }
       }
     ]
   },

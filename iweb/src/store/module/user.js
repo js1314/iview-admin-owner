@@ -6,15 +6,15 @@ export default {
   state: {
     userId: '',
     userName: '',
-    avatarImgPath: '',
+    avatar: '',
     token: getToken(),
     access: [],
     hasGetInfo: false,
     displayMode: {}
   },
   mutations: {
-    setAvatar(state, avatarPath) {
-      state.avatarImgPath = avatarPath;
+    setAvatar(state, avatar) {
+      state.avatar = avatar;
     },
     setUserId(state, id) {
       state.userId = id;
@@ -36,9 +36,9 @@ export default {
   actions: {
     // 登录
     handleLogin({commit}, {username, password}) {
-      let mobile = username.trim();
+      username = username.trim();
       return new Promise((resolve, reject) => {
-        login({mobile, password}).then(res => {
+        login({username, password}).then(res => {
           let data = res.data;
           if (data.code == 200) {
             data = data.result;

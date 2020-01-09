@@ -1,19 +1,7 @@
 import axios from '@/libs/api.request';
 
-export const login = (data = {}, config = {}) => axios.request({
-  url: 'login',
-  method: 'post',
-  data, ...config
-});
-
-export const logout = (params = {}, config = {}) => axios.request({
-  url: 'logout',
-  method: 'get',
-  params, ...config
-});
-
-export const relogin = (params = {}, config = {}) => axios.request({
-  url: 'relogin',
+export const user_detail = (params = {}, config = {}) => axios.request({
+  url: 'user/detail',
   method: 'get',
   params, ...config
 });

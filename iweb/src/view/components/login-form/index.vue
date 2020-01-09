@@ -1,7 +1,7 @@
 <template>
   <Form ref="loginForm" :model="form" :rules="rules" @keydown.enter.native="handleSubmit">
     <FormItem prop="username">
-      <Input v-model="form.username" placeholder="请输入手机号" maxlength="11" :disabled="loading">
+      <Input v-model="form.username" placeholder="请输入账号" maxlength="11" :disabled="loading">
         <span slot="prepend">
           <Icon :size="16" type="ios-person"></Icon>
         </span>
@@ -66,9 +66,8 @@
         this.$refs.loginForm.validate((valid) => {
           if (valid) {
             this.loading = true;
-            this.$emit('on-success-valid', {
-              username: this.form.username,
-              password: this.form.password,
+            this.$emit('on-success', {
+              ...this.form,
               callback: () => {
                 this.loading = false;
               }
