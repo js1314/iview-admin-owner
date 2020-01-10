@@ -13,7 +13,7 @@
   export default {
     methods: {
       login() {
-        window.location.href = process.env.BASE_URL + '#/login';
+        window.location.href = this.$config.baseUrl + '#/login';
       }
     },
     mounted() {

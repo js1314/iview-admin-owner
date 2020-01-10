@@ -2,14 +2,14 @@
 // (runtime-only or standalone) has been set in webpack.base.conf with an alias.
 import Vue from 'vue';
 import App from './App';
+import config from '@/config';
 import router from './router';
 import store from './store';
-import iView from 'view-design';
 import i18n from '@/locale';
-import config from '@/config';
 import importDirective from '@/directive';
-import {directive as clickOutside} from 'v-click-outside-x';
 import installPlugin from '@/plugin';
+import {directive as clickOutside} from 'v-click-outside-x';
+import iView from 'view-design';
 
 import './index.less';
 import '@/assets/icons/iconfont.css';
@@ -29,7 +29,7 @@ import Viewer from 'v-viewer';
 
 // 实际打包时应该不引入mock
 /* eslint-disable */
-process.env.NODE_ENV !== 'production' && require('@/mock');
+config.production || require('@/mock');
 
 Vue.use(iView, {
   i18n: (key, value) => i18n.t(key, value)
@@ -43,7 +43,7 @@ Vue.component('TreeSelect', TreeSelect);
 Vue.component('AdminTable', AdminTable);
 
 /**
- * @description 注册admin内置插件
+ * @description 注册插件
  */
 installPlugin(Vue);
 
@@ -56,7 +56,6 @@ Vue.config.productionTip = false;
  * @description 全局注册应用配置
  */
 Vue.prototype.$config = config;
-Vue.prototype.$apiUrl = config.baseUrl[process.env.NODE_ENV === 'development' ? 'dev' : 'pro'];
 
 /**
  * 注册指令

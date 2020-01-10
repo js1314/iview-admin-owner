@@ -1,11 +1,18 @@
-import Main from '@/components/main';
-import parentView from '@/components/parent-view';
-import myadminRouters from './myadmin';
+import config from '@/config';
+import Main from '_c/main';
+import parentView from '_c/parent-view';
 
+/**
+ * 动态标题
+ * @param route
+ * @param def
+ * @returns {*}
+ */
 const queryTitle = (route, def) => {
   return route ? route.query._title || def : def;
 };
 
+// 静态路由，无权限
 const staticRouters = [
   {
     path: '/login',
@@ -42,6 +49,7 @@ const staticRouters = [
   }
 ];
 
+// 动态路由，有权限
 const dynamicRouters = [
   {
     path: '/',
@@ -65,6 +73,24 @@ const dynamicRouters = [
     ]
   },
   {
+    path: '/examples',
+    name: '组件示例',
+    component: Main,
+    meta: {
+      icon: 'md-cog',
+      title: '组件示例'
+    },
+    children: [{
+      path: '/examples/iview-admin-table',
+      name: 'iview-admin-table',
+      component: Component.lazyView('examples/iview-admin-table/index.vue'),
+      meta: {
+        icon: 'ios-cog',
+        title: 'iview-admin-table'
+      }
+    }]
+  },
+  {
     path: '/system_manage',
     name: 'system_manage',
     component: Main,
@@ -80,9 +106,9 @@ const dynamicRouters = [
         icon: 'ios-log-out',
         title: '退出登录',
         hideInTag: true
-      },
+      }
     }]
-  },
+  }
 ];
 
-export default process.env.NODE_ENV == 'production' ? [...staticRouters, ...dynamicRouters] : [...staticRouters, ...dynamicRouters, ...myadminRouters];
+export default [...staticRouters, ...dynamicRouters];

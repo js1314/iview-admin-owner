@@ -1,50 +1,51 @@
 import Cookies from 'js-cookie';
 // cookie保存的天数
 import config from '@/config';
-import {forEach, hasOneOf, objEqual} from '@/libs/tools';
+import {hasOneOf, objEqual} from '@/libs/tools';
 
 const {title, cookieExpires, useI18n} = config;
 
-export const TOKEN_KEY = 'token';
+const TOKEN_KEY = 'token';
 
 export const setToken = (token) => {
   Cookies.set(TOKEN_KEY, token, {expires: cookieExpires || 1});
 };
 
 export const getToken = () => {
-  const token = Cookies.get(TOKEN_KEY);
-  if (token) return token;
-  else return false;
+  return Cookies.get(TOKEN_KEY) || '';
 };
 
-export const hasChild = (item) => {
-  return item.children && item.children.length !== 0;
+export const hasChild = ({children}) => {
+  return children && children.length !== 0;
 };
 
-const showThisMenuEle = (item, access) => {
-  if (item.meta && item.meta.access && item.meta.access.length) {
-    if (hasOneOf(item.meta.access, access)) return true;
-    else return false;
-  } else return true;
+const showThisMenuEle = ({meta}, access) => {
+  return meta && meta.access && meta.access.length ? hasOneOf(meta.access, access) : true;
 };
+
 /**
  * @param {Array} list 通过路由列表得到菜单列表
  * @returns {Array}
  */
 export const getMenuByRouter = (list, access) => {
   let res = [];
-  forEach(list, item => {
-    if (!item.meta || (item.meta && !item.meta.hideInMenu)) {
+  list.forEach(item => {
+    let meta = item.meta || {};
+    if (!meta || (meta && !meta.hideInMenu)) {
       let obj = {
-        icon: (item.meta && item.meta.icon) || '',
+        icon: meta.icon || '',
         name: item.name,
         meta: item.meta
       };
-      if ((hasChild(item) || (item.meta && item.meta.showAlways)) && showThisMenuEle(item, access)) {
+      if ((hasChild(item) || meta.showAlways) && showThisMenuEle(item, access)) {
         obj.children = getMenuByRouter(item.children, access);
       }
-      if (item.meta && item.meta.href) obj.href = item.meta.href;
-      if (showThisMenuEle(item, access)) res.push(obj);
+      if (meta.href) {
+        obj.href = meta.href;
+      }
+      if (showThisMenuEle(item, access)) {
+        res.push(obj);
+      }
     }
   });
   return res;
@@ -57,37 +58,37 @@ export const getMenuByRouter = (list, access) => {
 export const getBreadCrumbList = (route, homeRoute) => {
   let homeItem = {...homeRoute, icon: homeRoute.meta.icon};
   let routeMetched = route.matched;
-  if (routeMetched.some(item => item.name === homeRoute.name)) return [homeItem];
-  let res = routeMetched.filter(item => {
-    return item.meta === undefined || !item.meta.hideInBread;
-  }).map(item => {
+  if (routeMetched.some(item => item.name === homeRoute.name)) {
+    return [homeItem];
+  }
+  let matched = routeMetched.filter(item => !item.meta || !item.meta.hideInBread).map(item => {
     let meta = {...item.meta};
-    if (meta.title && typeof meta.title === 'function') {
-      item.meta.__titleFunction__ = meta.__titleFunction__ = meta.title;
-      meta.title = meta.title(route);
+    let $title = meta.title;
+    if (Function.isFunction($title)) { // 动态标题
+      item.meta.$title = meta.$title = $title;
+      meta.title = $title(route);
     }
     return {
-      icon: (item.meta && item.meta.icon) || '',
-      name: item.name,
+      name: item.name || '',
+      icon: meta.icon || '',
       meta: meta
     };
   });
-  // 隐藏菜单也算进面包屑
-  // res = res.filter(item => {
-  //   return !item.meta.hideInMenu;
-  // });
-  return [{...homeItem, to: homeRoute.path}, ...res];
+  return [{...homeItem, to: homeRoute.path}, ...matched];
 };
 
 export const getRouteTitleHandled = (route) => {
   let router = {...route};
   let meta = {...route.meta};
   let title = '';
-  if (meta.title) {
-    if (typeof meta.title === 'function') {
-      route.meta.__titleFunction__ = meta.__titleFunction__ = meta.title;
-      title = meta.title(router);
-    } else title = meta.title;
+  let $title = meta.title;
+  if ($title) {
+    if (Function.isFunction($title)) { // 动态标题
+      route.meta.$title = meta.$title = $title;
+      title = $title(router);
+    } else {
+      title = $title;
+    }
   }
   meta.title = title;
   router.meta = meta;
@@ -95,34 +96,34 @@ export const getRouteTitleHandled = (route) => {
 };
 
 export const showTitle = (item, vm) => {
-  let {title, __titleFunction__} = item.meta;
-  if (!title) return;
-  if (useI18n) {
-    if (title.includes('{{') && title.includes('}}') && useI18n) title = title.replace(/({{[\s\S]+?}})/, (m, str) => str.replace(/{{([\s\S]*)}}/, (m, _) => vm.$t(_.trim())));
-    else if (__titleFunction__) title = __titleFunction__(vm.$route, title);
-    else title = vm.$t(item.name);
-  } else if (__titleFunction__) title = __titleFunction__(vm.$route, title);
-  else title = title || item.name;
-  return title;
+  let {title, $title} = item.meta;
+  if (!useI18n) {
+    title = $title ? $title(vm.$route, title) : title || item.name;
+  } else if (title.includes('{{') && title.includes('}}') && useI18n) {
+    title = title.replace(/({{[\s\S]+?}})/, (m, str) => str.replace(/{{([\s\S]*)}}/, (m, _) => vm.$t(_.trim())));
+  } else {
+    title = $title ? $title(vm.$route, title) : vm.$t(item.name);
+  }
+  return title || '';
 };
 
 /**
- * @description 本地存储和获取标签导航列表
+ * 本地存储和获取标签导航列表
  */
 export const setTagNavListInLocalstorage = (id, list) => {
-  localStorage['tagNaveList' + id] = JSON.stringify(list);
+  localStorage['tagNavList' + id] = JSON.stringify(list);
 };
 /**
  * @returns {Array} 其中的每个元素只包含路由原信息中的name, path, meta三项
  */
 export const getTagNavListFromLocalstorage = (id) => {
-  const list = localStorage['tagNaveList' + id];
+  const list = localStorage['tagNavList' + id];
   return list ? JSON.parse(list) : [];
 };
 
 /**
  * @param {Array} routers 路由列表数组
- * @description 用于找到路由列表中name为home的对象
+ * 用于找到路由列表中name为home的对象
  */
 export const getHomeRoute = (routers, homeName = 'home') => {
   let i = -1;
@@ -132,9 +133,13 @@ export const getHomeRoute = (routers, homeName = 'home') => {
     let item = routers[i];
     if (item.children && item.children.length) {
       let res = getHomeRoute(item.children, homeName);
-      if (res.name) return res;
+      if (res.name) {
+        return res;
+      }
     } else {
-      if (item.name === homeName) homeRoute = item;
+      if (item.name === homeName) {
+        homeRoute = item;
+      }
     }
   }
   return homeRoute;
@@ -143,13 +148,14 @@ export const getHomeRoute = (routers, homeName = 'home') => {
 /**
  * @param {*} list 现有标签导航列表
  * @param {*} newRoute 新添加的路由原信息对象
- * @description 如果该newRoute已经存在则不再添加
+ * 如果该newRoute已经存在则不再添加
  */
 export const getNewTagList = (list, newRoute) => {
   const {name, path, meta} = newRoute;
   let newList = [...list];
-  if (newList.findIndex(item => item.name === name) >= 0) return newList;
-  else newList.push({name, path, meta});
+  if (newList.findIndex(item => item.name === name) < 0) {
+    newList.push({name, path, meta});
+  }
   return newList;
 };
 
@@ -158,8 +164,7 @@ export const getNewTagList = (list, newRoute) => {
  * @param {*} route 路由列表
  */
 const hasAccess = (access, route) => {
-  if (route.meta && route.meta.access) return hasOneOf(access, route.meta.access);
-  else return true;
+  return route.meta && route.meta.access ? hasOneOf(access, route.meta.access) : true;
 };
 
 /**
@@ -167,7 +172,7 @@ const hasAccess = (access, route) => {
  * @param {*} name 即将跳转的路由name
  * @param {*} access 用户权限数组
  * @param {*} routes 路由列表
- * @description 用户是否可跳转到该页
+ * 用户是否可跳转到该页
  */
 export const canTurnTo = (name, access, routes) => {
   const routePermissionJudge = (list) => {
@@ -179,13 +184,12 @@ export const canTurnTo = (name, access, routes) => {
       }
     });
   };
-
   return routePermissionJudge(routes);
 };
 
 /**
  * @param {String} url
- * @description 从URL中解析参数
+ * 从URL中解析参数
  */
 export const getParams = url => {
   const keyValueArr = url.split('?')[1].split('&');
@@ -202,82 +206,43 @@ export const getParams = url => {
  * @param {String} name 当前关闭的标签的name
  */
 export const getNextRoute = (list, route) => {
-  let res = {};
   if (list.length === 2) {
-    res = getHomeRoute(list);
-  } else {
-    const index = list.findIndex(item => routeEqual(item, route));
-    if (index === list.length - 1) res = list[list.length - 2];
-    else res = list[index + 1];
+    return getHomeRoute(list);
   }
-  return res;
+  const index = list.findIndex(item => routeEqual(item, route));
+  return index === list.length - 1 ? list[list.length - 2] : list[index + 1];
 };
 
 /**
- * @param {Number} times 回调函数需要执行的次数
- * @param {Function} callback 回调函数
+ * 根据当前跳转的路由设置显示在浏览器标签的title
+ * @param {Object} routeItem 路由对象
+ * @param {Object} vm Vue实例
  */
-export const doCustomTimes = (times, callback) => {
-  let i = -1;
-  while (++i < times) {
-    callback(i);
-  }
+export const setTitle = (routeItem, vm) => {
+  const handledRoute = getRouteTitleHandled(routeItem);
+  const pageTitle = showTitle(handledRoute, vm);
+  const resTitle = pageTitle ? `${title} - ${pageTitle}` : title;
+  window.document.title = resTitle;
 };
 
 /**
- * @param {Object} file 从上传组件得到的文件对象
- * @returns {Promise} resolve参数是解析后的二维数组
- * @description 从Csv文件中解析出表格，解析成二维数组
+ * 根据name/params/query判断两个路由对象是否相等
+ * @param {*} route1 路由对象
+ * @param {*} route2 路由对象
  */
-export const getArrayFromFile = (file) => {
-  let nameSplit = file.name.split('.');
-  let format = nameSplit[nameSplit.length - 1];
-  return new Promise((resolve, reject) => {
-    let reader = new FileReader();
-    reader.readAsText(file); // 以文本格式读取
-    let arr = [];
-    reader.onload = function (evt) {
-      let data = evt.target.result; // 读到的数据
-      let pasteData = data.trim();
-      arr = pasteData.split((/[\n\u0085\u2028\u2029]|\r\n?/g)).map(row => {
-        return row.split('\t');
-      }).map(item => {
-        return item[0].split(',');
-      });
-      if (format === 'csv') resolve(arr);
-      else reject(new Error('[Format Error]:你上传的不是Csv文件'));
-    };
-  });
+export const routeEqual = (route1, route2) => {
+  const params1 = route1.params || {};
+  const params2 = route2.params || {};
+  const query1 = route1.query || {};
+  const query2 = route2.query || {};
+  return (route1.name === route2.name) && objEqual(params1, params2) && objEqual(query1, query2);
 };
 
 /**
- * @param {Array} array 表格数据二维数组
- * @returns {Object} { columns, tableData }
- * @description 从二维数组中获取表头和表格数据，将第一行作为表头，用于在iView的表格中展示数据
+ * 判断打开的标签列表里是否已存在这个新添加的路由对象
  */
-export const getTableDataFromArray = (array) => {
-  let columns = [];
-  let tableData = [];
-  if (array.length > 1) {
-    let titles = array.shift();
-    columns = titles.map(item => {
-      return {
-        title: item,
-        key: item
-      };
-    });
-    tableData = array.map(item => {
-      let res = {};
-      item.forEach((col, i) => {
-        res[titles[i]] = col;
-      });
-      return res;
-    });
-  }
-  return {
-    columns,
-    tableData
-  };
+export const routeHasExist = (tagNavList, routeItem) => {
+  return tagNavList.some(tag => routeEqual(tag, routeItem));
 };
 
 export const findNodeUpper = (ele, tag) => {
@@ -309,47 +274,13 @@ export const findNodeDownward = (ele, tag) => {
     let len = ele.childNodes.length;
     while (++i < len) {
       let child = ele.childNodes[i];
-      if (child.tagName === tagName) return child;
-      else return findNodeDownward(child, tag);
+      if (child.tagName === tagName) {
+        return child;
+      } else {
+        return findNodeDownward(child, tag);
+      }
     }
   }
-};
-
-export const showByAccess = (access, canViewAccess) => {
-  return hasOneOf(canViewAccess, access);
-};
-
-/**
- * @description 根据name/params/query判断两个路由对象是否相等
- * @param {*} route1 路由对象
- * @param {*} route2 路由对象
- */
-export const routeEqual = (route1, route2) => {
-  const params1 = route1.params || {};
-  const params2 = route2.params || {};
-  const query1 = route1.query || {};
-  const query2 = route2.query || {};
-  return (route1.name === route2.name) && objEqual(params1, params2) && objEqual(query1, query2);
-};
-
-/**
- * 判断打开的标签列表里是否已存在这个新添加的路由对象
- */
-export const routeHasExist = (tagNavList, routeItem) => {
-  let len = tagNavList.length;
-  let res = false;
-  doCustomTimes(len, (index) => {
-    if (routeEqual(tagNavList[index], routeItem)) res = true;
-  });
-  return res;
-};
-
-export const localSave = (key, value) => {
-  localStorage.setItem(key, value);
-};
-
-export const localRead = (key) => {
-  return localStorage.getItem(key) || '';
 };
 
 // scrollTop animation
@@ -386,17 +317,5 @@ export const scrollTop = (el, from = 0, to, duration = 500, endCallback) => {
     window.requestAnimationFrame(() => scroll(d, end, step));
   };
   scroll(from, to, step);
-};
-
-/**
- * @description 根据当前跳转的路由设置显示在浏览器标签的title
- * @param {Object} routeItem 路由对象
- * @param {Object} vm Vue实例
- */
-export const setTitle = (routeItem, vm) => {
-  const handledRoute = getRouteTitleHandled(routeItem);
-  const pageTitle = showTitle(handledRoute, vm);
-  const resTitle = pageTitle ? `${title} - ${pageTitle}` : title;
-  window.document.title = resTitle;
 };
 

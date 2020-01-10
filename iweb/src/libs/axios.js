@@ -76,7 +76,7 @@ function checkReLogin(url, status, statusText) {
 }
 
 class HttpRequest {
-  constructor(baseUrl = baseURL) {
+  constructor(baseUrl) {
     this.baseUrl = baseUrl;
     this.queue = {};
   }

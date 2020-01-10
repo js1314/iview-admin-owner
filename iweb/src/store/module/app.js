@@ -7,9 +7,7 @@ import {
   getNextRoute,
   routeHasExist,
   routeEqual,
-  getRouteTitleHandled,
-  localSave,
-  localRead
+  getRouteTitleHandled
 } from '@/libs/util';
 import {log_insert} from '@/api/log';
 import router from '@/router';
@@ -32,7 +30,7 @@ export default {
     breadCrumbList: [],
     tagNavList: [],
     homeRoute: {},
-    local: localRead('local'),
+    local: localStorage.getItem('local'),
     errorList: [],
     hasReadErrorPage: false
   },
@@ -77,7 +75,7 @@ export default {
       }
     },
     setLocal(state, lang) {
-      localSave('local', lang);
+      localStorage.setItem('local', lang);
       state.local = lang;
     },
     addError(state, error) {
