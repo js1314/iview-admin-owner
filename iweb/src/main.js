@@ -27,8 +27,8 @@ import KindEditor from 'vue-kindeditor';
 import TreeSelect from '@riophae/vue-treeselect';
 import Viewer from 'v-viewer';
 
-// 实际打包时应该不引入mock
 /* eslint-disable */
+// 实际打包时应该不引入mock
 config.production || require('@/mock');
 
 Vue.use(iView, {

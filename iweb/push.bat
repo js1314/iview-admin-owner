@@ -3,10 +3,10 @@ set PACKAGE_NAME=%1
 set PUSH_MESSAGE=%2
 if "%PACKAGE_NAME%"=="" (
   echo Error: package name missing
-) else (if not exist "src/packages/%PACKAGE_NAME%" (
+) else (if not exist "npm/%PACKAGE_NAME%" (
   echo Error: package not exists
 ) else (
-  cd src/packages/%PACKAGE_NAME%
+  cd npm/%PACKAGE_NAME%
   echo Git Pushing...
   git add *
   git commit -m %PUSH_MESSAGE%

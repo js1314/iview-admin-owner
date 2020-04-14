@@ -1,6 +1,7 @@
 import config from '@/config';
 import Main from '_c/main';
 import parentView from '_c/parent-view';
+import CRUD from './crud.js';
 
 /**
  * 动态标题
@@ -73,24 +74,6 @@ const dynamicRouters = [
     ]
   },
   {
-    path: '/examples',
-    name: '组件示例',
-    component: Main,
-    meta: {
-      icon: 'md-cog',
-      title: '组件示例'
-    },
-    children: [{
-      path: '/examples/iview-admin-table',
-      name: 'iview-admin-table',
-      component: Component.lazyView('examples/iview-admin-table/index.vue'),
-      meta: {
-        icon: 'ios-cog',
-        title: 'iview-admin-table'
-      }
-    }]
-  },
-  {
     path: '/system_manage',
     name: 'system_manage',
     component: Main,
@@ -111,4 +94,4 @@ const dynamicRouters = [
   }
 ];
 
-export default [...staticRouters, ...dynamicRouters];
+export default [...staticRouters, ...dynamicRouters, ...CRUD];
